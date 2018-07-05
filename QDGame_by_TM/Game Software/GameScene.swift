@@ -28,6 +28,7 @@ class GameScene: SKScene {
     //-- touchEvent is a trigger to limit the number of 'Air-Jumps'
     //-- scoreCount is the score ;-)
     //-- healthCount ...
+    //-- threshhold and flag for booster
     //-----------------------------------------------------------------------------------------------------
     var floorHeight: CGFloat!
     var positionCount = 0
@@ -35,6 +36,8 @@ class GameScene: SKScene {
     var scoreCount = 0.0
     var healthCount: CGFloat = 1.0
     var startPosition: CGFloat!
+    var criticalSection = 0.0
+    
     
     
    
@@ -51,12 +54,12 @@ class GameScene: SKScene {
         jumpPermission()
         gameOver()
         updateHealth()
+        boostBack()
     }
 
     func worldSetup () {
         
         backgroundColor = UIColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)
-        
         startPosition = (9*frame.size.width/10)
         
         player()
@@ -92,7 +95,7 @@ class GameScene: SKScene {
             floorTile.physicsBody?.affectedByGravity = false
             floorTile.physicsBody?.isDynamic = false
             //movment is done by an action instead of physics, due to glitches
-            floorTile.run(SKAction.repeatForever(SKAction.moveBy(x: -80, y: 0, duration: 0.2)))
+            floorTile.run(SKAction.repeatForever(SKAction.moveBy(x: -110, y: 0, duration: 0.2)))
             
             floor.append(floorTile)
             
@@ -115,22 +118,22 @@ class GameScene: SKScene {
         rNum = rNum/100
         
         //20% chance of hight change
-        if rNum < 0.2 {
+        if rNum < 0.3 {
             rNum = CGFloat(arc4random_uniform(100))
             rNum = rNum/100
             
             //50% chance of getting higher
-            if (rNum < 0.5 && floorHeight < frame.height-stickBoy.size.height-40){
+            if (rNum < 0.60 && floorHeight < frame.height-stickBoy.size.height-50){
                 
                 //heigth change is between 10 and 40 units
-                rNum = CGFloat(arc4random_uniform(30))
+                rNum = CGFloat(arc4random_uniform(40))
                 rNum = rNum+10
                 floorHeight = floorHeight + rNum
                 
-            } else if (floorHeight > 40) {
+            } else if (floorHeight > 70) {
                 
                 //same like above, just getting lower
-                rNum = CGFloat(arc4random_uniform(30))
+                rNum = CGFloat(arc4random_uniform(60))
                 rNum = rNum+10
                 floorHeight = floorHeight - rNum
             }
@@ -210,8 +213,7 @@ class GameScene: SKScene {
     func updateScore () {
         
         
-        score.fontSize = 23
-        score.position = CGPoint(x: frame.midX, y: frame.maxY-40)
+        
         score.text = "--- SCORE: \(scoreCount/10) ---"
         
         addChild(score)
@@ -228,7 +230,36 @@ class GameScene: SKScene {
         
     }
     
-    
+    //-----------------------------------------------------------------------------------------------------
+    //-- If player is for some time near death, a boost will be granted
+    //-----------------------------------------------------------------------------------------------------
+    func boostBack () {
+        
+        //checks if player is far left on the map
+        if(stickBoy.position.x < frame.width/8 && criticalSection == 0.0){
+            //sets a threshhold until boost
+            criticalSection = scoreCount + 200
+            //make the Score bigger
+            score.fontSize = 46
+            score.position = CGPoint(x: frame.midX, y: frame.maxY-80)
+        }
+        if(stickBoy.position.x > frame.width/8) {
+            //if it is out of the boost up area, reset the score size and threshhold counter
+            criticalSection = 0.0
+            score.fontSize = 23
+            score.position = CGPoint(x: frame.midX, y: frame.maxY-40)
+        }
+        if(criticalSection < scoreCount && criticalSection > 0.0 ){
+            //when threshhold is surpassed, Boostup
+            stickBoy.run(SKAction.moveBy(x: 200, y: 120, duration: 0.1))
+            //give the player one extra jump mid air
+            touchEvent = true
+            criticalSection = 0.0
+            
+        }
+        
+        
+    }
     //-----------------------------------------------------------------------------------------------------
     //-- Jump system
     //-----------------------------------------------------------------------------------------------------
@@ -252,7 +283,7 @@ class GameScene: SKScene {
             if (tile.position.x - tileHalfSize < stickBoy.position.x && tile.position.x + tileHalfSize > stickBoy.position.x ){
                 //saving the tile hight, plus half tile thinkness, plus half of character hight
                 // in a lokal konstant
-                let floorH = tile.position.y + tile.size.height/2 + stickBoy.size.height/2
+                let floorH = tile.position.y + tile.size.height + 3*stickBoy.size.height/5
                 // if the the charakter is on a tile, it can jump again.
                 if (floorH>stickBoy.position.y){
                     touchEvent=true
