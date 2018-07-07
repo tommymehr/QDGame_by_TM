@@ -42,7 +42,8 @@ class GameScene: SKScene {
     
    
     override func didMove(to view: SKView) {
-        worldSetup()
+        initPlayr()
+        initFloor()
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -51,21 +52,12 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         tileLoop()
-        jumpPermission()
-        gameOver()
         updateHealth()
         boostBack()
+        jumpPermission()
+        gameOver()
     }
 
-    func worldSetup () {
-        
-        backgroundColor = UIColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)
-        startPosition = (9*frame.size.width/10)
-        
-        player()
-        initFloorAr()
-        
-    }
     
     //-----------------------------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------------------------
@@ -76,7 +68,7 @@ class GameScene: SKScene {
     //-----------------------------------------------------------------------------------------------------
     //-- Initialising the floor array with tiles.
     //-----------------------------------------------------------------------------------------------------
-    func initFloorAr () {
+    func initFloor () {
         var i: CGFloat = 0.0
         var j = 0
         //setting the initial floor height
@@ -177,9 +169,11 @@ class GameScene: SKScene {
     //-----------------------------------------------------------------------------------------------------
     //-- Constructing the player model
     //-----------------------------------------------------------------------------------------------------
-    func player () {
+    func initPlayr () {
+        startPosition = (9*frame.size.width/10)
+        
         //Assining PNG graphics to the basic SpriteNode
-        stickBoy = SKSpriteNode(imageNamed: "stickMan")
+        stickBoy = SKSpriteNode(imageNamed: "stickMan1x")
         //--------------------------------------------------------------------------------------
         
         //Setting the global size of the _stickBoy_
@@ -251,7 +245,7 @@ class GameScene: SKScene {
         }
         if(criticalSection < scoreCount && criticalSection > 0.0 ){
             //when threshhold is surpassed, Boostup
-            stickBoy.run(SKAction.moveBy(x: 200, y: 120, duration: 0.1))
+            stickBoy.run(SKAction.moveBy(x: 200, y: 120, duration: 0.3))
             //give the player one extra jump mid air
             touchEvent = true
             criticalSection = 0.0
@@ -309,7 +303,7 @@ class GameScene: SKScene {
             //resetting the score
             scoreCount = 0.0
             //creat a new player
-            player()
+            initPlayr()
         }
     }
 }
