@@ -84,6 +84,7 @@ class GameScene: SKScene {
             floorTile.position = CGPoint(x: i, y: floorHeight)
             //setting the physics of each tile
             floorTile.physicsBody = SKPhysicsBody(rectangleOf: floorTile.size)
+            floorTile.physicsBody?.allowsRotation = false
             floorTile.physicsBody?.affectedByGravity = false
             floorTile.physicsBody?.isDynamic = false
             //movment is done by an action instead of physics, due to glitches
@@ -144,19 +145,17 @@ class GameScene: SKScene {
             let xPosition = floor[(positionCount+floor.count-1)%floor.count].position.x + floor[(positionCount+floor.count-1)%floor.count].size.width
             //moving the left tile to the right end
             floor[positionCount].position = CGPoint(x: xPosition, y: floorHeight)
+            //Reset the physic body of the tiles, when the get respawend
+            floor[positionCount].physicsBody?.isDynamic = false
+            floor[positionCount].physicsBody?.affectedByGravity = false
             
             positionCount += 1
             positionCount = positionCount%floor.count
             
             //updating the to the next floorHeight
             worldLayout()
-            
-            //--------------------------
-            //--- Score calculation ----
-            scoreCount += 3
-            score.removeFromParent()
+            //updating the score
             updateScore()
-            //--------------------------
         }
     }
     
@@ -205,13 +204,12 @@ class GameScene: SKScene {
     //-- Score update
     //-----------------------------------------------------------------------------------------------------
     func updateScore () {
-        
-        
-        
+        //If score isn´t added yet, add it to the parent
+        if score.parent == nil {
+            addChild(score)
+        }
+        scoreCount += 3
         score.text = "--- SCORE: \(scoreCount/10) ---"
-        
-        addChild(score)
-        
     }
     
     //-----------------------------------------------------------------------------------------------------
@@ -220,7 +218,8 @@ class GameScene: SKScene {
     func updateHealth () {
         
         healthCount = stickBoy.position.x/startPosition
-        backgroundColor = UIColor(red: (1-healthCount)*200/255, green: healthCount*200/255, blue: healthCount*200/255, alpha: 1.0)
+        
+        backgroundColor = UIColor(red: ((1-healthCount)*55+200)/255, green: healthCount*255/255, blue: healthCount*255/255, alpha: 1.0)
         
     }
     
@@ -245,7 +244,7 @@ class GameScene: SKScene {
         }
         if(criticalSection < scoreCount && criticalSection > 0.0 ){
             //when threshhold is surpassed, Boostup
-            stickBoy.run(SKAction.moveBy(x: 200, y: 120, duration: 0.3))
+            stickBoy.run(SKAction.moveBy(x: 400, y: 120, duration: 0.3))
             //give the player one extra jump mid air
             touchEvent = true
             criticalSection = 0.0
@@ -270,9 +269,16 @@ class GameScene: SKScene {
     //-----------------------------------------------------------------------------------------------------
     func jumpPermission () {
         //Saving the tile size in a lokal konstant
-        let tileHalfSize = floor[0].size.width
+        let tileHalfSize = floor[0].size.width/2
         //going through every tile in the floor
         for tile in floor {
+            //is true when tile is underneath or left of the avatar
+            
+            if (tile.position.x < stickBoy.position.x ){
+                //Physics of the tiles engaged, so they fall when the player steps on it
+                tile.physicsBody?.isDynamic = true
+                tile.physicsBody?.affectedByGravity = true
+            }
             //is true when tile is right underneath the avatar
             if (tile.position.x - tileHalfSize < stickBoy.position.x && tile.position.x + tileHalfSize > stickBoy.position.x ){
                 //saving the tile hight, plus half tile thinkness, plus half of character hight
